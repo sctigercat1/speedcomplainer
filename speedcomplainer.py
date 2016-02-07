@@ -25,6 +25,7 @@ def main(filename, argv):
     while not shutdownFlag:
         try:
 
+            print("monitor run")
             monitor.run()
 
             for i in range(0, 5):
@@ -53,7 +54,7 @@ class Monitor():
             self.runPingTest()
             self.lastPingCheck = datetime.now()
 
-        if not self.lastSpeedTest or (datetime.now() - self.lastSpeedTest).total_seconds() >= 3600:
+        if not self.lastSpeedTest or (datetime.now() - self.lastSpeedTest).total_seconds() >= 1800:
             self.runSpeedTest()
             self.lastSpeedTest = datetime.now()
 
@@ -100,7 +101,12 @@ class SpeedTest(threading.Thread):
 
     def doSpeedTest(self):
         # run a speed test
-        result = os.popen("/usr/local/bin/speedtest-cli --simple").read()
+        result = os.popen("python /home/pi/speedtest/speedtest_cli.py --simple").read()
+
+        print '-------------'
+        print result
+        print '-------------'
+
         if 'Cannot' in result:
             return { 'date': datetime.now(), 'uploadResult': 0, 'downloadResult': 0, 'ping': 0 }
 
@@ -121,7 +127,7 @@ class SpeedTest(threading.Thread):
         return { 'date': datetime.now(), 'uploadResult': uploadResult, 'downloadResult': downloadResult, 'ping': pingResult }
 
     def logSpeedTestResults(self, speedTestResults):
-        self.logger.log([ speedTestResults['date'].strftime('%Y-%m-%d %H:%M:%S'), str(speedTestResults['uploadResult']), str(speedTestResults['downloadResult']), str(speedTestResults['ping']) ])
+        self.logger.log([ speedTestResults['date'].strftime('%Y-%m-%d %H:%M:%S'), str(speedTestResults['ping']), str(speedTestResults['downloadResult']), str(speedTestResults['uploadResult']) ])
 
 
 class DaemonApp():
@@ -149,6 +155,4 @@ if __name__ == '__main__':
     dRunner.daemon_context.umask = 0o002
     dRunner.daemon_context.signal_map = { signal.SIGTERM: 'terminate', signal.SIGUP: 'terminate' }
     dRunner.do_action()
-
-
 
