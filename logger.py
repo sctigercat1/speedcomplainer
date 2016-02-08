@@ -1,3 +1,4 @@
+import csv
 
 class Logger(object):
     def __init__(self, type, config):
@@ -13,4 +14,5 @@ class CsvLogger(object):
 
     def log(self, logItems):
         with open(self.filename, "a") as logfile:
-            logfile.write("%s\n" % ','.join(logItems))
+            writer = csv.writer(logfile)
+            writer.writerow(logItems)

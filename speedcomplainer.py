@@ -13,8 +13,7 @@ shutdownFlag = False
 
 def main(filename, argv):
     print "======================================"
-    print " Starting Speed Complainer!           "
-    print " Lets get noisy!                      "
+    print " Starting Speed Reporter!             "
     print "======================================"
 
     global shutdownFlag
@@ -46,48 +45,16 @@ def shutdownHandler(signo, stack_frame):
 
 class Monitor():
     def __init__(self):
-        self.lastPingCheck = None
         self.lastSpeedTest = None
 
     def run(self):
-        if not self.lastPingCheck or (datetime.now() - self.lastPingCheck).total_seconds() >= 60:
-            self.runPingTest()
-            self.lastPingCheck = datetime.now()
-
         if not self.lastSpeedTest or (datetime.now() - self.lastSpeedTest).total_seconds() >= 1800:
             self.runSpeedTest()
             self.lastSpeedTest = datetime.now()
 
-    def runPingTest(self):
-        pingThread = PingTest()
-        pingThread.start()
-
     def runSpeedTest(self):
         speedThread = SpeedTest()
         speedThread.start()
-
-class PingTest(threading.Thread):
-    def __init__(self, numPings=3, pingTimeout=2, maxWaitTime=6):
-        super(PingTest, self).__init__()
-        self.numPings = numPings
-        self.pingTimeout = pingTimeout
-        self.maxWaitTime = maxWaitTime
-        self.config = json.load(open('./config.json'))
-        self.logger = Logger(self.config['log']['type'], { 'filename': self.config['log']['files']['ping'] })
-
-    def run(self):
-        pingResults = self.doPingTest()
-        self.logPingResults(pingResults)
-
-    def doPingTest(self):
-        response = os.system("ping -c %s -W %s -w %s 8.8.8.8 > /dev/null 2>&1" % (self.numPings, (self.pingTimeout * 1000), self.maxWaitTime))
-        success = 0
-        if response == 0:
-            success = 1
-        return { 'date': datetime.now(), 'success': success }
-
-    def logPingResults(self, pingResults):
-        self.logger.log([ pingResults['date'].strftime('%Y-%m-%d %H:%M:%S'), str(pingResults['success'])])
 
 class SpeedTest(threading.Thread):
     def __init__(self):
